@@ -1,11 +1,45 @@
-
-
+import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
+import client from "../utils/client";
+import { Alert, Grid, Typography, CircularProgress } from "@mui/material";
+import ProductItem from "../components/ProductItem";
 
 export default function Home() {
+  const [state, setState] = useState({
+    products: [],
+    error: "",
+    loading: true,
+  });
+  const { loading, error, products } = state;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const products = await client.fetch(`
+        *[_type == "product"]
+        `);
+        setState({ products, loading: false });
+      } catch (error) {
+        setState({ loading: false, error: error.message });
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
     <Layout>
-      List products
+      {loading ? (
+        <CircularProgress />
+      ) : error ? (
+        <Alert variant='danger'>{error}</Alert>
+      ) : (
+        <Grid container spacing={3}>
+          {products.map((product) => (
+            <Grid item md={4} key={product.slug}>
+              <ProductItem product={product}/>
+            </Grid>
+          ))}
+        </Grid>
+      )}
     </Layout>
   );
 }
