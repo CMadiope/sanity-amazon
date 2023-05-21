@@ -3,7 +3,7 @@ import {
   Box,
   Container,
   CssBaseline,
-  Link as muiLink,
+  Link as MUILink,
   ThemeProvider,
   Toolbar,
   Typography,
@@ -68,10 +68,8 @@ export default function Layout({ title, description, children }) {
         <AppBar position='static' sx={classes.appbar}>
           <Toolbar sx={classes.toolbar}>
             <Box display='flex' alignItems='center'>
-              <Link href='/' passHref>
-                <muiLink>
-                  <Typography sx={classes.brand}>Amazon</Typography>
-                </muiLink>
+              <Link href='/'>
+                <Typography sx={classes.brand}>Amazon</Typography>
               </Link>
             </Box>
             <Box>

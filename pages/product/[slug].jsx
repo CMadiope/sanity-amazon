@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import client from "../../utils/client";
+import { useSnackbar } from "notistack";
 import Layout from "../../components/Layout";
 import {
   Alert,
@@ -12,20 +13,26 @@ import {
   ListItem,
   Rating,
   Typography,
-  Link as muiLink,
 } from "@mui/material";
 import Link from "next/link";
 import classes from "../../utils/classes";
 import Image from "next/image";
-import { urlFor } from "../../utils/image";
+import { urlFor, urlForThumbnail } from "../../utils/image";
+import { Store } from "../../utils/store";
+import axios from "axios";
 
 const ProductScreen = (props) => {
   const { slug } = props;
+  const {
+    state: { cart },
+    dispatch,
+  } = useContext(Store);
   const [state, setState] = useState({
     product: null,
     loading: true,
     error: "",
   });
+  const { enqueueSnackbar } = useSnackbar();
 
   const { product, loading, error } = state;
   useEffect(() => {
@@ -45,19 +52,42 @@ const ProductScreen = (props) => {
     fetchData();
   }, []);
 
+  const addToCartHandler = async () => {
+    const existItem = cart.cartItems.find((x) => x._id === product._id);
+    const quantity = existItem ? existItem.quantity + 1 : 1;
+    const { data } = await axios.get(`/api/products/${product._id}`);
+    if (data.countInStock < quantity) {
+      enqueueSnackbar("Sorry. Product is out of stock", { variant: "error" });
+      return;
+    }
+    dispatch({
+      type: "CART_ADD_ITEM",
+      payload: {
+        _key: product._id,
+        name: product.name,
+        countInStock: product.countInStock,
+        slug: product.slug.current,
+        price: product.price,
+        image: urlForThumbnail(product.image),
+        quantity,
+      },
+    });
+    enqueueSnackbar(`${product.name} added to the cart`, {
+      variant: "success",
+    });
+  };
+
   return (
     <Layout title={product?.title}>
       {loading ? (
         <CircularProgress />
       ) : error ? (
-        <Alert variant='error'>{error.message}</Alert>
+        <Alert variant='error'>{error}</Alert>
       ) : (
         <Box>
           <Box sx={classes.section}>
-            <Link href='/' passHref>
-              <muiLink>
-                <Typography>Back to results</Typography>
-              </muiLink>
+            <Link href='/'>
+              <Typography>back to result</Typography>
             </Link>
           </Box>
           <Grid container spacing={1}>
@@ -70,7 +100,7 @@ const ProductScreen = (props) => {
                 height={640}
               />
             </Grid>
-            <Grid md={3} xs={12}>
+            <Grid item md={3} xs={12}>
               <List>
                 <ListItem>
                   <Typography component='h1' variant='h1'>
@@ -82,7 +112,7 @@ const ProductScreen = (props) => {
                 <ListItem>
                   <Rating value={product.rating} readOnly></Rating>
                   <Typography sx={classes.smallText}>
-                    ( {product.numReviews} reviews)
+                    ({product.numReviews} reviews)
                   </Typography>
                 </ListItem>
                 <ListItem>
@@ -90,39 +120,45 @@ const ProductScreen = (props) => {
                 </ListItem>
               </List>
             </Grid>
-          </Grid>
-          <Grid item md={3} xs={12}>
-            <Card>
-              <List>
-                <ListItem>
-                  <Grid container>
-                    <Grid item xs={6}>
-                      <Typography>Price</Typography>
+            <Grid item md={3} xs={12}>
+              <Card>
+                <List>
+                  <ListItem>
+                    <Grid container>
+                      <Grid item xs={6}>
+                        <Typography>Price</Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography>${product.price}</Typography>
+                      </Grid>
                     </Grid>
-                    <Grid item xs={6}>
-                      <Typography>${product.price}</Typography>
+                  </ListItem>
+                  <ListItem>
+                    <Grid container>
+                      <Grid item xs={6}>
+                        <Typography>Status</Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography>
+                          {product.countInStock > 0
+                            ? "In stock"
+                            : "Unavailable"}
+                        </Typography>
+                      </Grid>
                     </Grid>
-                  </Grid>
-                </ListItem>
-                <ListItem>
-                  <Grid container>
-                    <Grid item xs={6}>
-                      <Typography>Status</Typography>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Typography>
-                        {product.countInstock > 0 ? "In stock" : "unavailable"}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </ListItem>
-                <ListItem>
-                  <Button fullWidth variant='contained'>
-                    Add to card
-                  </Button>
-                </ListItem>
-              </List>
-            </Card>
+                  </ListItem>
+                  <ListItem>
+                    <Button
+                      onClick={addToCartHandler}
+                      fullWidth
+                      variant='contained'
+                    >
+                      Add to cart
+                    </Button>
+                  </ListItem>
+                </List>
+              </Card>
+            </Grid>
           </Grid>
         </Box>
       )}
@@ -137,5 +173,3 @@ export function getServerSideProps(context) {
     props: { slug: context.params.slug },
   };
 }
-
-// 1:37:31
