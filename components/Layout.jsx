@@ -8,13 +8,18 @@ import {
   Toolbar,
   Typography,
   createTheme,
+  Switch,
 } from "@mui/material";
 import Head from "next/head";
-import React from "react";
+import React, { useContext } from "react";
 import Link from "next/link";
 import classes from "../utils/classes";
+import { Store } from "../utils/store";
+import jsCookies from "js-cookie";
 
 export default function Layout({ title, description, children }) {
+  const { state, dispatch } = useContext(Store);
+  const { darkMode } = state;
   const theme = createTheme({
     components: {
       MuiLink: {
@@ -36,7 +41,7 @@ export default function Layout({ title, description, children }) {
       },
     },
     palette: {
-      mode: "light",
+      mode: darkMode ? "dark" : "light",
       primary: {
         main: "#f0c000",
       },
@@ -45,6 +50,12 @@ export default function Layout({ title, description, children }) {
       },
     },
   });
+
+  const darkModeChangeHandler = () => {
+    dispatch({ type: darkMode ? "DARK_MODE_OFF" : "DARK_MODE_ON" });
+    const newDarkMode = !darkMode;
+    jsCookies.set("darkMode", newDarkMode ? "ON" : "OFF");
+  };
 
   return (
     <>
@@ -56,11 +67,19 @@ export default function Layout({ title, description, children }) {
         <CssBaseline />
         <AppBar position='static' sx={classes.appbar}>
           <Toolbar sx={classes.toolbar}>
-            <Link href='/' passHref>
-              <muiLink>
-                <Typography sx={classes.brand}>Amazon</Typography>
-              </muiLink>
-            </Link>
+            <Box display='flex' alignItems='center'>
+              <Link href='/' passHref>
+                <muiLink>
+                  <Typography sx={classes.brand}>Amazon</Typography>
+                </muiLink>
+              </Link>
+            </Box>
+            <Box>
+              <Switch
+                checked={darkMode}
+                onChange={darkModeChangeHandler}
+              ></Switch>
+            </Box>
           </Toolbar>
         </AppBar>
         <Container component='main' sx={classes.main}>

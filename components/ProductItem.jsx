@@ -5,6 +5,7 @@ import {
   CardActions,
   CardContent,
   CardMedia,
+  Rating,
   Typography,
 } from "@mui/material";
 import React from "react";
@@ -23,9 +24,7 @@ const ProductItem = ({ product }) => {
           />
           <CardContent>
             <Typography>{product.name}</Typography>
-            <Typography>
-              {product.rating} {product.numReviews} revies
-            </Typography>
+            <Rating value={product.rating} readOnly></Rating>
           </CardContent>
         </CardActionArea>
       </Link>
